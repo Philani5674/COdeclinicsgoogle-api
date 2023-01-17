@@ -13,6 +13,10 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
+# this will be used to add calendar.
+
+YOUR_TIMEZONE = 'Africa/Johannesburg' 
+
 
 def main():
     """Shows basic usage of the Google Calendar API.
@@ -35,8 +39,20 @@ def main():
         # Save the credentials for the next run
         with open('.token.json', 'w') as token:
             token.write(creds.to_json())
+            
+    #get user calander
+    #if the user calander is not found, create the calander
+    
+    
+    #get events from the calanders
+    get_events(creds)
+    a = input("type command") 
+    if a== "add":
+        book_a_slot(creds, "soccer ball practice")
 
 
+
+def get_events(creds):
     try:
         service = build('calendar', 'v3', credentials=creds)
         calendar_list = service.calendarList().list(pageToken=None).execute() 
@@ -65,13 +81,61 @@ def main():
                 for event in events:
                     start = event['start'].get('dateTime', event['start'].get('date'))
                     print(datetime.datetime.strptime(start, "%Y-%m-%dT%H:%M:%S%z"), event['summary'])
-                    
-                
-        
-            
-        
+                        
     except HttpError as error:
         print('An error occurred: %s' % error)
+   
+
+def book_a_slot(creds, description): 
+    service = build('calendar', 'v3', credentials=creds)
+    calendar_list = service.calendarList().list(pageToken=None).execute() 
+    for cal in calendar_list['items']:
+        start = datetime.datetime.utcnow()
+        
+        end = datetime.datetime.utcnow() + datetime.timedelta(minutes= 30)
+        start_formatted = start.isoformat() + 'Z'
+        end_formatted = end.isoformat() + 'Z'
+
+        event = {
+        'summary': description,
+        'start': {
+            'dateTime': start_formatted,
+            'timeZone': YOUR_TIMEZONE,
+            },
+        'end': {
+            'dateTime': end_formatted,
+            'timeZone': YOUR_TIMEZONE,
+            },
+        }
+        
+        event = service.events().insert(calendarId=cal['id'], body=event).execute()
+        print('Event created: %s' % (event.get('htmlLink')))
+
+
+def volunteer_for_a_slot(creds, description):
+    service = build('calendar', 'v3', credentials=creds)
+    calendar_list = service.calendarList().list(pageToken=None).execute() 
+    for cal in calendar_list['items']:
+        start = datetime.datetime.utcnow()
+        
+        end = datetime.datetime.utcnow() + datetime.timedelta(minutes= 30)
+        start_formatted = start.isoformat() + 'Z'
+        end_formatted = end.isoformat() + 'Z'
+
+        event = {
+        'summary': description,
+        'start': {
+            'dateTime': start_formatted,
+            'timeZone': YOUR_TIMEZONE,
+            },
+        'end': {
+            'dateTime': end_formatted,
+            'timeZone': YOUR_TIMEZONE,
+            },
+        }
+        
+        event = service.events().insert(calendarId=cal['id'], body=event).execute()
+        print('Event created: %s' % (event.get('htmlLink')))
 
 
 if __name__ == '__main__':
